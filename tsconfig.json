@@ -9,6 +9,9 @@
       "@navigation/*": [
         "src/navigation/*"
       ],
+      "@theme/*": [
+        "src/theme/*"
+      ],
       "root/*": [
         "src/*"
       ],
