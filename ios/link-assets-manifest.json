@@ -2,6 +2,10 @@
   "migIndex": 1,
   "data": [
     {
+      "path": "src/assets/config/fontello.json",
+      "sha1": "7dfba3d8f0120a4e6b9e4ec82c54598deb2b8492"
+    },
+    {
       "path": "src/assets/fonts/Poppins-Black.ttf",
       "sha1": "645e04c53c6b5b35bce654a811ebce16af8aa721"
     },
@@ -40,6 +44,18 @@
     {
       "path": "src/assets/fonts/Poppins-Thin.ttf",
       "sha1": "09ba4dcd5509c8085bf88c665dcc51cbdfced27b"
+    },
+    {
+      "path": "src/assets/fonts/Silkscreen-Bold.ttf",
+      "sha1": "5972c3a5af5cbc3d5b07a21238e699a99ce870a3"
+    },
+    {
+      "path": "src/assets/fonts/Silkscreen-Regular.ttf",
+      "sha1": "03eba58ce04345e42a23a1703067e3bdce17c724"
+    },
+    {
+      "path": "src/assets/fonts/fontello.ttf",
+      "sha1": "1fa01bc26e5d90727f1a6dca6f364731f067d320"
     }
   ]
 }

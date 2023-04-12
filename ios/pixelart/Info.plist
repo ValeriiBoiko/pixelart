@@ -63,6 +63,9 @@
 		<string>Poppins-Regular.ttf</string>
 		<string>Poppins-SemiBold.ttf</string>
 		<string>Poppins-Thin.ttf</string>
+		<string>Silkscreen-Bold.ttf</string>
+		<string>Silkscreen-Regular.ttf</string>
+		<string>fontello.ttf</string>
 	</array>
 </dict>
 </plist>
