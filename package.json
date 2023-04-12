@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
-    "ios": "react-native run-ios",
+    "ios": "react-native run-ios --simulator='iPhone 8'",
     "lint": "eslint .",
     "start": "npx kill-port 8081; watchman watch-del '/Users/valerii.boiko/Development/pixelart' ; watchman watch-project '/Users/valerii.boiko/Development/pixelart'; react-native start",
     "test": "jest"
   },
   "dependencies": {
+    "@gorhom/bottom-sheet": "^4",
     "@react-native-async-storage/async-storage": "^1.18.0",
     "@react-native-community/slider": "^4.4.2",
     "@react-navigation/native": "^6.1.6",
