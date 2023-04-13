@@ -24,8 +24,7 @@ const RootNavigator = () => {
 
     return (
         <NavigationContainer theme={theme}>
-            <Stack.Navigator>
-                <Stack.Screen name={Routes.HOME} component={Home} />
+                <Stack.Screen options={{ title: 'Your works' }} name={Routes.HOME} component={Home} />
                 <Stack.Screen name={Routes.CANVAS} component={Canvas} />
             </Stack.Navigator>
         </NavigationContainer>
