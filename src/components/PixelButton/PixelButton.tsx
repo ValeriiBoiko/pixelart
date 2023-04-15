@@ -17,7 +17,7 @@ export type TPixelButtonProps = TouchableOpacityProps & {
   title?: string;
   icon?: string | (() => ReactNode);
   borderColor?: string;
-  contentContainerStyle: StyleProp<ViewStyle>;
+  contentContainerStyle?: StyleProp<ViewStyle>;
 };
 
 const PixelButton: FC<TPixelButtonProps> = ({
