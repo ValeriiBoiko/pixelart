@@ -1,19 +1,20 @@
 import useStyles from '@hooks/useStyles';
-import React, { useRef, ForwardRefRenderFunction, useCallback } from 'react';
+import React, { useRef, useCallback, FC, useMemo } from 'react';
 import {
+  Dimensions,
   StyleProp,
   StyleSheet,
   View,
   ViewProps,
   ViewStyle,
 } from 'react-native';
-import Canvas from 'react-native-canvas';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
 import getGridCanvasStyles from './GridCanvasStyles';
 import useCanvasGesture, { TCell } from '../../hooks/useCanvasGesture';
 import GridCanvasBackground from './GridCanvasBackground';
 import GridCanvasGrid from './GridCanvasGrid';
+import { Canvas, GCanvasView } from '@flyskywhy/react-native-gcanvas';
 
 type TCanvasProps = Partial<ViewProps> & {
   size: number;
@@ -23,18 +24,23 @@ type TCanvasProps = Partial<ViewProps> & {
   withBackground?: boolean;
   style?: AnimatedStyleProp<View> | StyleProp<ViewStyle>;
   onTouchCell: (cell: TCell) => void;
+  onCanvasCreate?: (canvas: Canvas) => void;
 };
 
 export const MIN_CELLS = 16;
 export const MAX_CELLS = 96;
-export const CANVAS_SIZE = 1920;
+export const CANVAS_SIZE = Dimensions.get('window').width * 1.5;
 
-const GridCanvas: ForwardRefRenderFunction<Canvas, TCanvasProps> = (
-  { withGrid, withBackground, cellsNumber, size, style, onTouchCell, ...props },
-  forwardedRef,
-) => {
+const GridCanvas: FC<TCanvasProps> = ({
+  withGrid,
+  withBackground,
+  cellsNumber,
+  size,
+  style,
+  onTouchCell,
+  ...props
+}) => {
   const correlation = size / CANVAS_SIZE;
-
   const canvasRef = useRef<Canvas | null>(null);
   const { styles } = useStyles(getGridCanvasStyles, {
     canvasSize: CANVAS_SIZE,
@@ -50,11 +56,11 @@ const GridCanvas: ForwardRefRenderFunction<Canvas, TCanvasProps> = (
     onTouchCell,
   });
 
-  const handleRef = useCallback((ref: Canvas) => {
+  const onCanvasCreate = useCallback((ref: Canvas) => {
     if (
       ref &&
-      (ref?.height !== canvasRef.current?.height ||
-        ref?.width !== canvasRef.current?.width)
+      (ref.height !== canvasRef.current?.height ||
+        ref.width !== canvasRef.current?.width)
     ) {
       ref.height = CANVAS_SIZE;
       ref.width = CANVAS_SIZE;
@@ -62,12 +68,8 @@ const GridCanvas: ForwardRefRenderFunction<Canvas, TCanvasProps> = (
       canvasRef.current = ref;
     }
 
-    if (forwardedRef) {
-      if (typeof forwardedRef === 'function') {
-        forwardedRef(ref);
-      } else {
-        forwardedRef.current = ref;
-      }
+    if (props.onCanvasCreate) {
+      props.onCanvasCreate(ref);
     }
   }, []);
 
@@ -96,13 +98,14 @@ const GridCanvas: ForwardRefRenderFunction<Canvas, TCanvasProps> = (
               <View style={styles.canvasContainer}>
                 <GridCanvasBackground
                   cellsNumber={cellsNumber}
-                  style={StyleSheet.compose(
-                    styles.backgroundCanvas,
-                    withBackground ? null : styles.transparentCanvas,
-                  )}
+                  style={styles.backgroundCanvas}
                 />
 
-                <Canvas ref={handleRef} />
+                <GCanvasView
+                  isGestureResponsible={false}
+                  style={styles.canvas}
+                  onCanvasCreate={onCanvasCreate}
+                />
 
                 <GridCanvasGrid
                   cellsNumber={cellsNumber}
@@ -122,4 +125,4 @@ const GridCanvas: ForwardRefRenderFunction<Canvas, TCanvasProps> = (
   );
 };
 
-export default React.memo(React.forwardRef(GridCanvas));
+export default React.memo(GridCanvas);

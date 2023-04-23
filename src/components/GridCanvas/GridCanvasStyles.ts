@@ -24,26 +24,26 @@ const getGridCanvasStyles = ({
       opacity: 0,
     },
     canvasContainer: {
-      width: scaleWidth(props.canvasSize),
-      height: scaleWidth(props.canvasSize),
+      width: props.canvasSize,
+      height: props.canvasSize,
       transform: [
-        { translateX: -scaleWidth(props.canvasSize) / 2 },
-        { translateY: -scaleWidth(props.canvasSize) / 2 },
+        { translateX: -props.canvasSize / 2 },
+        { translateY: -props.canvasSize / 2 },
         { scale: props.correlation },
-        { translateX: scaleWidth(props.canvasSize) / 2 },
-        { translateY: scaleWidth(props.canvasSize) / 2 },
+        { translateX: props.canvasSize / 2 },
+        { translateY: props.canvasSize / 2 },
       ],
     },
     backgroundCanvas: {
-      position: 'absolute',
-      opacity: 0.05,
+      ...StyleSheet.absoluteFillObject,
+      opacity: 0.25,
     },
     gridCanvas: {
-      position: 'absolute',
+      ...StyleSheet.absoluteFillObject,
     },
     canvas: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
+      width: props.canvasSize,
+      height: props.canvasSize,
     },
   });
 };

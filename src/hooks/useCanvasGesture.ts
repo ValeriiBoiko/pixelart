@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
   Gesture,
   GestureStateChangeEvent,
@@ -11,7 +11,6 @@ import {
 import {
   Extrapolate,
   interpolate,
-  runOnJS,
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated';
@@ -32,7 +31,7 @@ type TCanvasProps = {
   onTouchCell: (cell: TCell) => void;
 };
 
-const MAX_CELL_SIZE = 40;
+const MAX_CELL_SIZE = 25;
 
 const useCanvasGesture = ({
   size,
@@ -44,106 +43,104 @@ const useCanvasGesture = ({
   const maxScale = MAX_CELL_SIZE / (size / cellsNumber);
 
   const isDragging = useSharedValue(false);
-  const filledCells = useRef<boolean[][]>([]);
+  const filledCells = useSharedValue<boolean[][]>([]);
 
   const scale = useSharedValue(1);
   const scaleSaved = useSharedValue(1);
 
   const transX = useSharedValue(0);
   const transY = useSharedValue(0);
-  const translationSaved = useSharedValue({
-    transX: 0,
-    transY: 0,
-  });
+  const transXSaved = useSharedValue(0);
+  const transYSaved = useSharedValue(0);
 
   const maxTranslation = useDerivedValue(
     () => interpolate(scale.value, [1, maxScale], [0, -size / 2]),
     [size],
   );
 
-  const onDrag = useCallback(
-    (event: GestureUpdateEvent<PanGestureHandlerEventPayload>) => {
-      if (event.state === State.ACTIVE) {
-        transX.value = interpolate(
-          translationSaved.value.transX + event.translationX / scale.value,
-          [maxTranslation.value, 0],
-          [maxTranslation.value, 0],
-          Extrapolate.CLAMP,
-        );
+  const onDrag = (event: GestureUpdateEvent<PanGestureHandlerEventPayload>) => {
+    if (event.state === State.ACTIVE) {
+      transX.value = interpolate(
+        transXSaved.value + event.translationX / scale.value,
+        [maxTranslation.value, 0],
+        [maxTranslation.value, 0],
+        Extrapolate.CLAMP,
+      );
 
-        transY.value = interpolate(
-          translationSaved.value.transY + event.translationY / scale.value,
-          [maxTranslation.value, 0],
-          [maxTranslation.value, 0],
-          Extrapolate.CLAMP,
-        );
-      } else if (event.state === State.END) {
-        translationSaved.value.transX = transX.value;
-        translationSaved.value.transY = transY.value;
-      }
-    },
-    [maxScale],
-  );
-
-  const onScale = useCallback(
-    (event: GestureUpdateEvent<PinchGestureHandlerEventPayload>) => {
-      if (event.state === State.ACTIVE) {
-        scale.value = interpolate(
-          scaleSaved.value * event.scale,
-          [1, maxScale],
-          [1, maxScale],
-          Extrapolate.CLAMP,
-        );
-
-        transX.value = interpolate(
-          scale.value,
-          [1, maxScale],
-          [0, translationSaved.value.transX],
-          Extrapolate.CLAMP,
-        );
-
-        transY.value = interpolate(
-          scale.value,
-          [1, maxScale],
-          [0, translationSaved.value.transY],
-          Extrapolate.CLAMP,
-        );
-      } else if (event.state === State.END) {
-        scaleSaved.value = scale.value;
-        translationSaved.value.transX = transX.value;
-        translationSaved.value.transY = transY.value;
-      }
-    },
-    [maxScale],
-  );
-
-  const getCellFromEvent = ({
-    x,
-    y,
-  }:
-    | GestureStateChangeEvent<PanGestureHandlerEventPayload>
-    | GestureUpdateEvent<PanGestureHandlerEventPayload>
-    | GestureStateChangeEvent<TapGestureHandlerEventPayload>) => {
-    const xIndex = Math.floor(x / step);
-    const yIndex = Math.floor(y / step);
-
-    return {
-      xIndex,
-      yIndex,
-      x: xIndex * (step / coeficient),
-      y: yIndex * (step / coeficient),
-      width: step / coeficient,
-      height: step / coeficient,
-    };
+      transY.value = interpolate(
+        transYSaved.value + event.translationY / scale.value,
+        [maxTranslation.value, 0],
+        [maxTranslation.value, 0],
+        Extrapolate.CLAMP,
+      );
+    } else if (event.state === State.END) {
+      transXSaved.value = transX.value;
+      transYSaved.value = transY.value;
+    }
   };
 
-  const onTap = (
-    event: GestureStateChangeEvent<TapGestureHandlerEventPayload>,
+  const onScale = (
+    event: GestureUpdateEvent<PinchGestureHandlerEventPayload>,
   ) => {
-    const cell = getCellFromEvent(event);
+    if (event.state === State.ACTIVE) {
+      scale.value = interpolate(
+        scaleSaved.value * event.scale,
+        [1, maxScale],
+        [1, maxScale],
+        Extrapolate.CLAMP,
+      );
 
-    onTouchCell(cell);
+      transX.value = interpolate(
+        scale.value,
+        [1, scaleSaved.value],
+        [0, transXSaved.value],
+        Extrapolate.CLAMP,
+      );
+
+      transY.value = interpolate(
+        scale.value,
+        [1, scaleSaved.value],
+        [0, transYSaved.value],
+        Extrapolate.CLAMP,
+      );
+    } else if (event.state === State.END) {
+      scaleSaved.value = scale.value;
+      transXSaved.value = transX.value;
+      transYSaved.value = transY.value;
+    }
   };
+
+  const getCellFromEvent = useCallback(
+    ({
+      x,
+      y,
+    }:
+      | GestureStateChangeEvent<PanGestureHandlerEventPayload>
+      | GestureUpdateEvent<PanGestureHandlerEventPayload>
+      | GestureStateChangeEvent<TapGestureHandlerEventPayload>) => {
+      const xIndex = Math.floor(x / step);
+      const yIndex = Math.floor(y / step);
+
+      return {
+        xIndex,
+        yIndex,
+        x: xIndex * (step / coeficient),
+        y: yIndex * (step / coeficient),
+        width: step / coeficient,
+        height: step / coeficient,
+      };
+    },
+    [step, coeficient],
+  );
+
+  const onTap = useCallback(
+    (event: GestureStateChangeEvent<TapGestureHandlerEventPayload>) => {
+      const cell = getCellFromEvent(event);
+
+      onTouchCell(cell);
+    },
+    [onTouchCell, getCellFromEvent],
+  );
 
   const onUpdatePanGesture = (
     event: GestureUpdateEvent<PanGestureHandlerEventPayload>,
@@ -151,12 +148,12 @@ const useCanvasGesture = ({
     const cell = getCellFromEvent(event);
 
     if (event.numberOfPointers === 1 && !isDragging.value) {
-      if (!filledCells.current[cell.xIndex]?.[cell.yIndex]) {
-        if (!filledCells.current[cell.xIndex]) {
-          filledCells.current[cell.xIndex] = [];
+      if (!filledCells.value[cell.xIndex]?.[cell.yIndex]) {
+        if (!filledCells.value[cell.xIndex]) {
+          filledCells.value[cell.xIndex] = [];
         }
 
-        filledCells.current[cell.xIndex][cell.yIndex] = true;
+        filledCells.value[cell.xIndex][cell.yIndex] = true;
 
         onTouchCell(cell);
       }
@@ -169,7 +166,7 @@ const useCanvasGesture = ({
   const onEndPanGesture = (
     event: GestureUpdateEvent<PanGestureHandlerEventPayload>,
   ) => {
-    filledCells.current = [];
+    filledCells.value = [];
 
     onDrag(event);
 
@@ -180,17 +177,15 @@ const useCanvasGesture = ({
     const panHandler = Gesture.Pan()
       .maxPointers(2)
       .minDistance(step)
-      .onUpdate(runOnJS(onUpdatePanGesture))
-      .onEnd(runOnJS(onEndPanGesture));
+      .onUpdate(onUpdatePanGesture)
+      .onEnd(onEndPanGesture);
 
-    const pinchHandler = Gesture.Pinch()
-      .onUpdate(runOnJS(onScale))
-      .onEnd(runOnJS(onScale));
+    const pinchHandler = Gesture.Pinch().onUpdate(onScale).onEnd(onScale);
 
-    const tapHandler = Gesture.Tap().onStart(runOnJS(onTap));
+    const tapHandler = Gesture.Tap().onStart(onTap);
 
     return Gesture.Simultaneous(panHandler, tapHandler, pinchHandler);
-  }, [onTouchCell, onScale, onTap]);
+  }, [step, onUpdatePanGesture, onEndPanGesture, onScale, onTap]);
 
   return { scale, transX, transY, panGesture };
 };

@@ -1,11 +1,17 @@
-import React, { FC, useCallback, useEffect, useRef } from 'react';
-import { InteractionManager } from 'react-native';
-import Canvas, { CanvasProps } from 'react-native-canvas';
-import { Extrapolate, interpolate } from 'react-native-reanimated';
-import { CANVAS_SIZE, MAX_CELLS, MIN_CELLS } from './GridCanvas';
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { InteractionManager, StyleSheet } from 'react-native';
+import { CANVAS_SIZE, MIN_CELLS } from './GridCanvas';
 import { useTheme } from '@react-navigation/native';
 
-type TCanvasProps = Omit<CanvasProps, 'ref'> & {
+import {
+  Canvas,
+  CanvasContext,
+  GCanvasView,
+  GCanvasViewProps,
+} from '@flyskywhy/react-native-gcanvas';
+
+type TCanvasProps = Omit<GCanvasViewProps, 'ref'> & {
+  color?: string;
   cellsNumber?: number;
 };
 
@@ -14,51 +20,51 @@ const GridCanvasGrid: FC<TCanvasProps> = ({
   ...props
 }) => {
   const { colors } = useTheme();
-  const canvasRef = useRef<Canvas | null>(null);
-  const step = CANVAS_SIZE / cellsNumber;
+  const [context, setContext] = useState<CanvasContext | null>(null);
+  const size = CANVAS_SIZE;
+  const step = size / cellsNumber;
 
   useEffect(() => {
     InteractionManager.runAfterInteractions(() => {
-      const context = canvasRef.current?.getContext('2d');
-
       if (context) {
         context.strokeStyle = colors.text;
-        context.lineWidth = interpolate(
-          cellsNumber,
-          [MIN_CELLS, MAX_CELLS],
-          [4, 1],
-          Extrapolate.CLAMP,
-        );
+        context.lineWidth = StyleSheet.hairlineWidth;
+
+        context.beginPath();
 
         for (let index = 0; index < cellsNumber; index++) {
           if (index > 0) {
-            context.beginPath();
             context.moveTo(step * index, 0);
-            context.lineTo(step * index, CANVAS_SIZE);
+            context.lineTo(step * index, size);
             context.stroke();
           }
 
           if (index > 0) {
-            context.beginPath();
             context.moveTo(0, step * index);
-            context.lineTo(CANVAS_SIZE, step * index);
+            context.lineTo(size, step * index);
             context.stroke();
           }
         }
       }
     });
-  }, [colors.text]);
+  }, [colors.text, context]);
 
-  const handleRef = useCallback((ref: Canvas) => {
-    if (ref && !canvasRef.current) {
-      ref.height = CANVAS_SIZE;
-      ref.width = CANVAS_SIZE;
+  const onCanvasCreaten = useCallback((canvas: Canvas) => {
+    if (canvas && !context) {
+      canvas.height = size;
+      canvas.width = size;
 
-      canvasRef.current = ref;
+      setContext(canvas.getContext('2d'));
     }
   }, []);
 
-  return <Canvas ref={handleRef} {...props} />;
+  return (
+    <GCanvasView
+      onCanvasCreate={onCanvasCreaten}
+      isGestureResponsible={false}
+      {...props}
+    />
+  );
 };
 
 export default React.memo(GridCanvasGrid);

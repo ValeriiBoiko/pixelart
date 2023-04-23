@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, FC, useCallback } from 'react';
-import Canvas, { CanvasProps } from 'react-native-canvas';
-import { Image } from 'react-native-canvas';
+import React, { FC, useMemo } from 'react';
+import { Defs, Path, Svg, SvgProps, Use } from 'react-native-svg';
 import { CANVAS_SIZE } from './GridCanvas';
 
-type TCanvasProps = Omit<CanvasProps, 'ref'> & {
+type TCanvasProps = Partial<SvgProps> & {
   cellsNumber?: number;
 };
 
@@ -13,80 +12,37 @@ const GridCanvasBackground: FC<TCanvasProps> = ({
   cellsNumber = BASE_CELLS_NUMBER,
   ...props
 }) => {
-  const canvasRef = useRef<Canvas | null>(null);
+  const cellsArray = new Array(cellsNumber).fill(null);
 
-  useEffect(() => {
-    if (canvasRef.current) {
-      const repeats = Math.floor(cellsNumber / BASE_CELLS_NUMBER);
-      const imageSize = CANVAS_SIZE / repeats;
-      const image = getImage(canvasRef.current, imageSize);
+  const rowPath = useMemo(
+    () =>
+      cellsArray
+        .map((_, index) => {
+          if (index % 2 == 0) {
+            return `M${index} 0 h1 v1 H${index} z`;
+          }
 
-      for (let xIndex = 0; xIndex < repeats; xIndex++) {
-        for (let yIndex = 0; yIndex < repeats; yIndex++) {
-          image.addEventListener('load', () => {
-            canvasRef.current
-              ?.getContext('2d')
-              .drawImage(image, xIndex * imageSize, yIndex * imageSize);
-          });
-        }
-      }
-    }
-  }, [cellsNumber]);
+          return ' ';
+        })
+        .join(''),
+    [cellsNumber],
+  );
 
-  const getImage = (canvas: Canvas, size: number) => {
-    const svgString = `
-    <svg width="${size}px" height="${size}px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-        <defs>
-            <g id="row">
-                <rect x="0" y="0" width="1" height="1" />
-                <rect x="2" y="0" width="1" height="1" />
-                <rect x="4" y="0" width="1" height="1" />
-                <rect x="6" y="0" width="1" height="1" />
-                <rect x="8" y="0" width="1" height="1" />
-                <rect x="10" y="0" width="1" height="1" />
-                <rect x="12" y="0" width="1" height="1" />
-                <rect x="14" y="0" width="1" height="1" />    
-            </g>
-        </defs>
-        
-        <use xlink:href="#row" x="0" y="0"/>
-        <use xlink:href="#row" x="1" y="1"/>
-        <use xlink:href="#row" x="0" y="2"/>
-        <use xlink:href="#row" x="1" y="3"/>
-        <use xlink:href="#row" x="0" y="4"/>
-        <use xlink:href="#row" x="1" y="5"/>
-        <use xlink:href="#row" x="0" y="6"/>
-        <use xlink:href="#row" x="1" y="7"/>
-        <use xlink:href="#row" x="0" y="8"/>
-        <use xlink:href="#row" x="1" y="9"/>
-        <use xlink:href="#row" x="0" y="10"/>
-        <use xlink:href="#row" x="1" y="11"/>
-        <use xlink:href="#row" x="0" y="12"/>
-        <use xlink:href="#row" x="1" y="13"/>
-        <use xlink:href="#row" x="0" y="14"/>
-        <use xlink:href="#row" x="1" y="15"/>
-    </svg>
-`;
+  return (
+    <Svg
+      width={CANVAS_SIZE}
+      height={CANVAS_SIZE}
+      viewBox={`0 0 ${cellsNumber} ${cellsNumber}`}
+      {...props}>
+      <Defs>
+        <Path id="path" d={rowPath}></Path>
+      </Defs>
 
-    const image = new Image(canvas);
-
-    image.src = `data:image/svg+xml,${encodeURIComponent(svgString)}`;
-    image.height = size;
-    image.width = size;
-
-    return image;
-  };
-
-  const handleRef = useCallback((ref: Canvas) => {
-    if (ref) {
-      ref.height = CANVAS_SIZE;
-      ref.width = CANVAS_SIZE;
-
-      canvasRef.current = ref;
-    }
-  }, []);
-
-  return <Canvas ref={handleRef} {...props} />;
+      {cellsArray.map((_, index) => (
+        <Use key={index} xlinkHref="#path" x={index % 2} y={index} />
+      ))}
+    </Svg>
+  );
 };
 
 export default React.memo(GridCanvasBackground);
